@@ -1,82 +1,92 @@
-#include <stdio.h>
-#include <string.h>
-
 /**
- * find_token_start - Find the start of the next token.
- * @buffer: The buffer to search.
- * @delim: The delimiter characters.
- *
- * Return: A pointer to the start of the next token.
+ * initialize_strtok - Initializes the strtok process.
+ * @str: The string to tokenize.
+ * Return: The initialized string pointer.
  */
-char *find_token_start(char *buffer, const char *delim)
+static char *initialize_strtok(char *str)
 {
-	while (*buffer)
+	static char *nxt;
+	static int size;
+
+	if (str != NULL)
 	{
-		if (!strchr(delim, *buffer))
-			break;
-		buffer++;
+		nxt = str;
+		size = strlen(str);
 	}
-
-	return (buffer);
-}
-
-/**
- * find_token_end - Find the end of the current token.
- * @token_start: The start of the current token.
- * @delim: The delimiter characters.
- *
- * Return: A pointer to the end of the current token.
- */
-char *find_token_end(char *token_start, const char *delim)
-{
-	char *token_end = token_start + 1;
-
-	while (*token_end)
+	else if (size > 0)
 	{
-		if (strchr(delim, *token_end))
-			break;
-		token_end++;
-	}
-
-	return (token_end);
-}
-
-/**
- * my_strtok - Tokenize a string.
- * @str: The string to be tokenized.
- * @delim: The delimiter characters.
- *
- * Return: A pointer to the next token, or NULL if no more tokens are found.
- */
-char *my_strtok(char *str, const char *delim)
-{
-	static char *buffer;
-
-	if (str)
-		buffer = str;
-
-	if (!buffer || !(*buffer))
-		return (NULL);
-
-	char *token_start = find_token_start(buffer, delim);
-
-	if (!(*token_start))
-	{
-		buffer = NULL;
-		return (NULL);
-	}
-
-	char *token_end = find_token_end(token_start, delim);
-
-	if (*token_end)
-	{
-		*token_end = '\0';
-		buffer = token_end + 1;
+		nxt++;
+		size--;
+		str = nxt;
 	}
 	else
 	{
-		buffer = NULL;
+		str = NULL;
 	}
 
-	return (token_start);
+	return (str);
+}
+
+/**
+ * handle_delimiters - Handles consecutive delimiters in the string.
+ * @nxt: Pointer to the current position in the string.
+ * @size: The remaining size of the string.
+ * @delim: The delimiter string.
+ */
+static void handle_delimiters(char **nxt, int *size, const char *delim)
+{
+	int i = strspn(*nxt, delim);
+
+	while (i > 1)
+	{
+		**nxt = '\0';
+		(*nxt)++;
+		(*size)--;
+		i--;
+	}
+	if (i == 1)
+	{
+		**nxt = '\0';
+		if (*size > 1)
+		{
+			(*nxt)--;
+			(*size)++;
+		}
+	}
+}
+
+/**
+ * advance_strtok - Advances the string pointer.
+ * @nxt: Pointer to the current position in the string.
+ * @size: The remaining size of the string.
+ */
+static void advance_strtok(char **nxt, int *size)
+{
+	(*nxt)++;
+	(*size)--;
+}
+
+/**
+ * _strtok - Split a string into tokens based on delimiters.
+ * @str: The string to tokenize.
+ * @delim: The delimiter string.
+ * Return: A pointer to the next token found in the string, or NULL if no more tokens are found.
+ */
+char *_strtok(char *str, const char *delim)
+{
+	char *nxt;
+	int size, i;
+
+	str = initialize_strtok(str);
+	if (str == NULL)
+		return (NULL);
+	nxt = str;
+	size = strlen(str);
+
+	while (*nxt)
+	{
+		handle_delimiters(&nxt, &size, delim);
+		advance_strtok(&nxt, &size);
+	}
+	return (str);
 }
